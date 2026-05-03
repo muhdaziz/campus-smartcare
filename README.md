@@ -1,79 +1,271 @@
-# Campus SmartCare
+# 🏥 Campus SmartCare
 
-Campus SmartCare is an AI-based smart campus healthcare assistant built for a university setting. It combines:
+Campus SmartCare is an AI-based smart campus healthcare assistant built for a university environment.
 
-- student self-service health access
-- explainable AI symptom triage
-- appointment booking and clinic queue management
-- emergency alert handling
-- secure health record review
-- doctor and admin operational dashboards
+It provides a centralized system for students, doctors, and administrators to manage healthcare interactions including symptom checks, appointments, emergency alerts, and medical records.
 
-## Stack
+---
 
-- `Frontend`: React + Vite + TypeScript
-- `Backend`: Node.js + TypeScript + Express
-- `Database`: PostgreSQL + Prisma ORM
-- `Security`: JWT, bcrypt password hashing, RBAC, Zod validation, encrypted sensitive text
+## 🚀 Features
 
-## Project Structure
+* 👤 User authentication (Student, Doctor, Admin)
+* 🩺 AI-assisted symptom triage
+* 📅 Appointment booking & queue management
+* 🚨 Emergency alert system
+* 📁 Medical record management
+* 🧑‍⚕️ Staff/admin dashboards
+* 🔐 Secure authentication (JWT + bcrypt)
+* 🧠 Input validation with Zod
+* 🔒 Encrypted sensitive health data
 
-```text
-frontend/   React application
-backend/    Express API, Prisma schema, AI engine, tests
-docs/       Architecture and API notes
+---
+
+## 🧱 Tech Stack
+
+### Frontend
+
+* React
+* Vite
+* TypeScript
+
+### Backend
+
+* Node.js
+* Express
+* TypeScript
+
+### Database
+
+* PostgreSQL
+* Prisma ORM
+
+### Dev Tools
+
+* Docker (PostgreSQL container)
+* Git & GitHub
+
+---
+
+## 📁 Project Structure
+
+```
+Campus SmartCare/
+├── frontend/        # React + Vite frontend
+├── backend/         # Express API, Prisma schema, AI engine
+├── docs/            # Documentation and notes
+├── docker-compose.yml
+├── package.json
+└── README.md
 ```
 
-## Quick Start
+---
 
-1. Copy `.env.example` to `.env`
-2. Start PostgreSQL with Docker:
+## ⚙️ Prerequisites
 
-```bash
-docker compose up -d
+Make sure you have installed:
+
+* Node.js
+* npm
+* Docker Desktop
+* Git
+
+---
+
+## 🔧 Environment Setup
+
+Copy the example file:
+
+```
+cp .env.example .env
 ```
 
-3. Install workspace dependencies:
+Then configure your environment variables.
 
-```bash
+Example:
+
+```
+DATABASE_URL="postgresql://smartcare:smartcare@localhost:5432/smartcare?schema=public"
+
+JWT_ACCESS_SECRET="dev-access-secret"
+JWT_REFRESH_SECRET="dev-refresh-secret"
+
+ENCRYPTION_KEY="12345678901234567890123456789012"
+```
+
+⚠️ Do NOT commit your `.env` file.
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Clone the repository
+
+```
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd Campus SmartCare
+```
+
+---
+
+### 2. Install dependencies
+
+```
 npm install
 ```
 
-4. Generate Prisma client and run migrations:
+---
 
-```bash
+### 3. Start PostgreSQL (Docker)
+
+```
+docker compose up -d
+```
+
+---
+
+### 4. Setup database (Prisma)
+
+```
 npm run prisma:generate --workspace backend
 npm run prisma:migrate --workspace backend
 npm run prisma:seed --workspace backend
 ```
 
-5. Start the API and frontend in separate terminals:
+---
 
-```bash
+### 5. Start Backend
+
+```
 npm run dev:backend
+```
+
+Backend runs at:
+
+```
+http://localhost:4000
+```
+
+Health check:
+
+```
+http://localhost:4000/api/health
+```
+
+---
+
+### 6. Start Frontend
+
+Open a new terminal:
+
+```
 npm run dev:frontend
 ```
 
-6. Open the frontend at `http://localhost:5173`
+Frontend runs at:
 
-## Default Seed Accounts
+```
+http://localhost:5173
+```
 
-- `admin@campussmartcare.edu`
-- `doctor1@campussmartcare.edu`
-- `doctor2@campussmartcare.edu`
+---
 
-Passwords are controlled from `.env`.
+## 🔑 Default Accounts (Seeded)
 
-## Verification
+```
+admin@campussmartcare.edu
+doctor1@campussmartcare.edu
+doctor2@campussmartcare.edu
+```
 
-- Production build:
+Passwords are set via `.env`.
 
-```bash
+---
+
+## 🧪 Useful Commands
+
+```
+npm run dev:frontend
+npm run dev:backend
 npm run build
-```
-
-- Backend tests:
-
-```bash
 npm test
+
+npm run prisma:generate --workspace backend
+npm run prisma:migrate --workspace backend
+npm run prisma:seed --workspace backend
 ```
+
+---
+
+## 🤝 Collaboration Guide
+
+### 1. Pull latest changes
+
+```
+git pull origin main
+```
+
+### 2. Create a new branch
+
+```
+git checkout -b feature/your-feature-name
+```
+
+### 3. Make changes and commit
+
+```
+git add .
+git commit -m "Add your feature"
+```
+
+### 4. Push branch
+
+```
+git push origin feature/your-feature-name
+```
+
+### 5. Open a Pull Request on GitHub
+
+---
+
+## ⚠️ Notes for Contributors
+
+* Do NOT commit `.env`
+* Always run migrations after modifying `schema.prisma`
+* Restart backend after env changes
+* Ensure Docker is running before backend
+* Frontend and backend must run in separate terminals
+
+---
+
+## 📌 Current Status
+
+* ✅ Frontend working
+* ✅ Backend API working
+* ✅ PostgreSQL + Docker working
+* ✅ Prisma migrations working
+* ✅ Authentication working
+
+---
+
+## 🚀 Future Improvements
+
+* Advanced AI diagnosis system
+* Real-time notifications
+* Appointment reminders
+* Analytics dashboard for admins
+* Mobile version
+* Deployment (Vercel + Railway)
+
+---
+
+## 👨‍💻 Author
+
+**Abdulhameed Shuaibu**
+
+AI/ML Training Data Specialist | Full Stack Developer
+
+---
+
+## 📜 License
+
+This project is for educational and demonstration purposes.

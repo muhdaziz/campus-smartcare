@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
-import type { Appointment, Assessment } from "../types";
+import type { Appointment, Assessment, User } from "../types";
 import { StatusPill } from "../components/StatusPill";
 
 export function AppointmentsPage() {
   const { session } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [doctors, setDoctors] = useState<User[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [studentForm, setStudentForm] = useState({
     preferredDateTime: "",
     reason: "",
@@ -27,11 +29,17 @@ export function AppointmentsPage() {
         setAppointments(appointmentsData);
         setAssessments(assessmentsData);
       } else {
-        const appointmentsData = await api.getAppointmentQueue();
+        const [appointmentsData, doctorsData] = await Promise.all([
+          api.getAppointmentQueue(),
+          api.listUsers("DOCTOR")
+        ]);
         setAppointments(appointmentsData);
+        setDoctors(doctorsData);
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load appointments");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -71,6 +79,7 @@ export function AppointmentsPage() {
 
   async function assignAppointment(id: string) {
     if (!assignDoctorId) {
+      setError("Please select a doctor to assign.");
       return;
     }
 
@@ -83,6 +92,14 @@ export function AppointmentsPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="loading-card">
+        <p>Loading appointments...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page-shell">
       <section className="panel page-heading">
@@ -92,7 +109,7 @@ export function AppointmentsPage() {
           <p>
             {session?.user.role === "STUDENT"
               ? "Request a clinic visit and connect your latest AI assessment when it helps staff prioritize your case."
-              : "Approve, reschedule, reject, or assign pending requests from the campus health queue."}
+              : "Approve, reschedule, reject, complete, or assign pending requests from the campus health queue."}
           </p>
         </div>
       </section>
@@ -162,16 +179,22 @@ export function AppointmentsPage() {
               <textarea
                 value={responseText}
                 onChange={(event) => setResponseText(event.target.value)}
-                placeholder="Optional note to include with approvals or reschedules"
+                placeholder="Optional note to include with status updates"
               />
             </label>
             <label>
-              Assign doctor ID
-              <input
+              Assign doctor
+              <select
                 value={assignDoctorId}
                 onChange={(event) => setAssignDoctorId(event.target.value)}
-                placeholder="Paste a doctor user ID when needed"
-              />
+              >
+                <option value="">Select a doctor...</option>
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.name} ({doctor.email})
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         </section>
@@ -194,6 +217,9 @@ export function AppointmentsPage() {
                 <span>Student ID: {appointment.student.id}</span>
                 {appointment.assignedDoctor && <span>Doctor: {appointment.assignedDoctor.name}</span>}
                 {appointment.triageLevel && <span>Triage: {appointment.triageLevel}</span>}
+                {appointment.clinicianResponse && (
+                  <span>Clinician note: {appointment.clinicianResponse}</span>
+                )}
               </div>
 
               {session?.user.role === "STUDENT" ? (
@@ -205,18 +231,46 @@ export function AppointmentsPage() {
                 </button>
               ) : (
                 <div className="action-cluster">
-                  <button className="ghost-button" onClick={() => void updateAppointment(appointment.id, "APPROVED")}>
-                    Approve
-                  </button>
-                  <button className="ghost-button" onClick={() => void updateAppointment(appointment.id, "RESCHEDULED")}>
-                    Reschedule
-                  </button>
-                  <button className="ghost-button danger" onClick={() => void updateAppointment(appointment.id, "REJECTED")}>
-                    Reject
-                  </button>
-                  <button className="ghost-button" onClick={() => void assignAppointment(appointment.id)}>
-                    Assign
-                  </button>
+                  {appointment.status !== "approved" && appointment.status !== "completed" && (
+                    <button
+                      className="ghost-button"
+                      onClick={() => void updateAppointment(appointment.id, "APPROVED")}
+                    >
+                      Approve
+                    </button>
+                  )}
+                  {appointment.status === "approved" && (
+                    <button
+                      className="ghost-button"
+                      onClick={() => void updateAppointment(appointment.id, "COMPLETED")}
+                    >
+                      Complete
+                    </button>
+                  )}
+                  {appointment.status !== "completed" && appointment.status !== "rejected" && appointment.status !== "cancelled" && (
+                    <button
+                      className="ghost-button"
+                      onClick={() => void updateAppointment(appointment.id, "RESCHEDULED")}
+                    >
+                      Reschedule
+                    </button>
+                  )}
+                  {appointment.status !== "completed" && appointment.status !== "rejected" && appointment.status !== "cancelled" && (
+                    <button
+                      className="ghost-button danger"
+                      onClick={() => void updateAppointment(appointment.id, "REJECTED")}
+                    >
+                      Reject
+                    </button>
+                  )}
+                  {appointment.status !== "completed" && (
+                    <button
+                      className="ghost-button"
+                      onClick={() => void assignAppointment(appointment.id)}
+                    >
+                      Assign
+                    </button>
+                  )}
                 </div>
               )}
             </div>

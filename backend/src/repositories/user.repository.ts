@@ -20,17 +20,25 @@ export const userRepository = {
     });
   },
 
+  findByRole(role?: Role) {
+    return prisma.user.findMany({
+      where: role ? { role, status: "ACTIVE" } : { status: "ACTIVE" },
+      include: profileInclude,
+      orderBy: { createdAt: "desc" }
+    });
+  },
+
   createStudent(input: {
     name: string;
     email: string;
-      passwordHash: string;
-      healthProfile?: {
-        matricNumber?: string;
-        ageRange?: string;
-        sex?: "FEMALE" | "MALE" | "OTHER" | "PREFER_NOT_TO_SAY";
-        allergiesEncrypted?: string | null;
-        chronicConditionsEncrypted?: string | null;
-      };
+    passwordHash: string;
+    healthProfile?: {
+      matricNumber?: string;
+      ageRange?: string;
+      sex?: "FEMALE" | "MALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+      allergiesEncrypted?: string | null;
+      chronicConditionsEncrypted?: string | null;
+    };
   }) {
     return prisma.user.create({
       data: {
@@ -56,6 +64,14 @@ export const userRepository = {
   }) {
     return prisma.user.create({
       data: input,
+      include: profileInclude
+    });
+  },
+
+  updateStatus(id: string, status: "ACTIVE" | "INACTIVE") {
+    return prisma.user.update({
+      where: { id },
+      data: { status },
       include: profileInclude
     });
   },

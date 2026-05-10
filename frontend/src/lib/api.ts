@@ -216,6 +216,11 @@ export const api = {
     return request<DashboardSummary>("/dashboard/summary");
   },
 
+  async listUsers(role?: string) {
+    const query = role ? `?role=${role}` : "";
+    return request<User[]>(`/admin/users${query}`);
+  },
+
   async createStaffAccount(payload: {
     name: string;
     email: string;
@@ -225,6 +230,12 @@ export const api = {
     return request<User>("/admin/users", {
       method: "POST",
       body: JSON.stringify(payload)
+    });
+  },
+
+  async deactivateUser(id: string) {
+    return request<User>(`/admin/users/${id}/deactivate`, {
+      method: "PATCH"
     });
   }
 };

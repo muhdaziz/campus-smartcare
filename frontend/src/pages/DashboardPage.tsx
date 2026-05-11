@@ -2,28 +2,65 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
-import type { DashboardSummary } from "../types";
 import { StatusPill } from "../components/StatusPill";
+
+type StudentSummary = {
+  role: "STUDENT";
+  metrics: {
+    totalAssessments: number;
+    pendingAppointments: number;
+    activeAlerts: number;
+    totalAppointments: number;
+  };
+  lastAssessment: {
+    condition: string;
+    triageLevel: string;
+    recommendation: string;
+    createdAt: string;
+  } | null;
+  recentAppointments: {
+    id: string;
+    reason: string;
+    status: string;
+    preferredDateTime: string;
+    assignedDoctor: string | null;
+  }[];
+};
+
+type StaffSummary = {
+  role: "ADMIN" | "DOCTOR";
+  metrics: Record<string, number>;
+  recentAppointments: {
+    id: string;
+    studentName: string;
+    status: string;
+    preferredDateTime: string;
+  }[];
+  recentEmergencies: {
+    id: string;
+    studentName: string;
+    severity: string;
+    status: string;
+  }[];
+};
+
+type DashboardSummary = StudentSummary | StaffSummary;
 
 export function DashboardPage() {
   const { session } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user.role === "STUDENT") {
-      return;
-    }
-
-    void api
+    api
       .getDashboardSummary()
-      .then(setSummary)
-      .catch((dashboardError: Error) => setError(dashboardError.message));
-  }, [session?.user.role]);
+      .then((data) => setSummary(data as DashboardSummary))
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   return (
     <div className="page-shell">
@@ -43,8 +80,81 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {session.user.role === "STUDENT" ? (
+      {error && <div className="form-error">{error}</div>}
+
+      {loading && (
+        <div className="loading-card">
+          <p>Loading dashboard...</p>
+        </div>
+      )}
+
+      {!loading && summary?.role === "STUDENT" && (
         <>
+          {/* Metrics */}
+          <section className="stat-grid">
+            <article className="metric-card">
+              <span>Assessments run</span>
+              <strong>{summary.metrics.totalAssessments}</strong>
+            </article>
+            <article className="metric-card">
+              <span>Pending appointments</span>
+              <strong>{summary.metrics.pendingAppointments}</strong>
+            </article>
+            <article className="metric-card">
+              <span>Total appointments</span>
+              <strong>{summary.metrics.totalAppointments}</strong>
+            </article>
+            <article className={`metric-card${summary.metrics.activeAlerts > 0 ? " alert-card" : ""}`}>
+              <span>Active alerts</span>
+              <strong>{summary.metrics.activeAlerts}</strong>
+            </article>
+          </section>
+
+          {/* Last assessment */}
+          {summary.lastAssessment && (
+            <section className="panel">
+              <h3>Last assessment result</h3>
+              <div className="info-grid">
+                <div>
+                  <span className="label">Condition</span>
+                  <strong>{summary.lastAssessment.condition}</strong>
+                </div>
+                <div>
+                  <span className="label">Triage level</span>
+                  <strong>{summary.lastAssessment.triageLevel}</strong>
+                </div>
+                <div>
+                  <span className="label">Date</span>
+                  <strong>{new Date(summary.lastAssessment.createdAt).toLocaleString()}</strong>
+                </div>
+                <div>
+                  <span className="label">Recommendation</span>
+                  <strong>{summary.lastAssessment.recommendation}</strong>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Recent appointments */}
+          <section className="panel">
+            <h3>Recent appointments</h3>
+            {summary.recentAppointments.length ? (
+              summary.recentAppointments.map((a) => (
+                <div className="list-row" key={a.id}>
+                  <div>
+                    <strong>{a.reason}</strong>
+                    <span>{new Date(a.preferredDateTime).toLocaleString()}</span>
+                    {a.assignedDoctor && <span>Dr. {a.assignedDoctor}</span>}
+                  </div>
+                  <StatusPill value={a.status} />
+                </div>
+              ))
+            ) : (
+              <p className="empty-state">No appointments yet.</p>
+            )}
+          </section>
+
+          {/* Quick actions */}
           <section className="stat-grid">
             <Link className="action-card" to="/symptom-checker">
               <strong>AI Symptom Checker</strong>
@@ -63,55 +173,31 @@ export function DashboardPage() {
               <span>Raise a high-priority alert when urgent campus medical attention is needed.</span>
             </Link>
           </section>
-
-          <section className="panel">
-            <h3>Your secure profile</h3>
-            <div className="info-grid">
-              <div>
-                <span className="label">Matric number</span>
-                <strong>{session.user.healthProfile?.matricNumber ?? "Not provided"}</strong>
-              </div>
-              <div>
-                <span className="label">Age range</span>
-                <strong>{session.user.healthProfile?.ageRange ?? "Not provided"}</strong>
-              </div>
-              <div>
-                <span className="label">Allergies</span>
-                <strong>{session.user.healthProfile?.allergies ?? "Not provided"}</strong>
-              </div>
-              <div>
-                <span className="label">Chronic conditions</span>
-                <strong>
-                  {session.user.healthProfile?.chronicConditions ?? "Not provided"}
-                </strong>
-              </div>
-            </div>
-          </section>
         </>
-      ) : (
+      )}
+
+      {!loading && summary && summary.role !== "STUDENT" && (
         <>
-          {error && <div className="form-error">{error}</div>}
           <section className="stat-grid">
-            {summary &&
-              Object.entries(summary.metrics).map(([label, value]) => (
-                <article className="metric-card" key={label}>
-                  <span>{label.replace(/([A-Z])/g, " $1")}</span>
-                  <strong>{value}</strong>
-                </article>
-              ))}
+            {Object.entries(summary.metrics).map(([label, value]) => (
+              <article className="metric-card" key={label}>
+                <span>{label.replace(/([A-Z])/g, " $1")}</span>
+                <strong>{value}</strong>
+              </article>
+            ))}
           </section>
 
           <section className="two-column-grid">
             <article className="panel">
               <h3>Recent appointments</h3>
-              {summary?.recentAppointments.length ? (
-                summary.recentAppointments.map((appointment) => (
-                  <div className="list-row" key={appointment.id}>
+              {summary.recentAppointments.length ? (
+                summary.recentAppointments.map((a) => (
+                  <div className="list-row" key={a.id}>
                     <div>
-                      <strong>{appointment.studentName}</strong>
-                      <span>{new Date(appointment.preferredDateTime).toLocaleString()}</span>
+                      <strong>{a.studentName}</strong>
+                      <span>{new Date(a.preferredDateTime).toLocaleString()}</span>
                     </div>
-                    <StatusPill value={appointment.status} />
+                    <StatusPill value={a.status} />
                   </div>
                 ))
               ) : (
@@ -121,7 +207,7 @@ export function DashboardPage() {
 
             <article className="panel">
               <h3>Recent emergency alerts</h3>
-              {summary?.recentEmergencies.length ? (
+              {summary.recentEmergencies.length ? (
                 summary.recentEmergencies.map((alert) => (
                   <div className="list-row" key={alert.id}>
                     <div>

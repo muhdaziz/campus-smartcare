@@ -4,7 +4,46 @@ import { emergencyRepository } from "../repositories/emergency.repository";
 import { userRepository } from "../repositories/user.repository";
 
 export const dashboardService = {
-  async getSummary(role: "DOCTOR" | "ADMIN", userId: string) {
+  async getSummary(role: "DOCTOR" | "ADMIN" | "STUDENT", userId: string) {
+    if (role === "STUDENT") {
+      const [assessments, appointments, alerts] = await Promise.all([
+        assessmentRepository.findManyByStudent(userId),
+        appointmentRepository.findMine(userId),
+        emergencyRepository.findForUser("STUDENT", userId)
+      ]);
+
+      const lastAssessment = assessments[0] ?? null;
+      const pendingAppointments = appointments.filter((a) => a.status === "PENDING").length;
+      const activeAlerts = alerts.filter(
+        (a) => a.status === "ACTIVE" || a.status === "ACKNOWLEDGED"
+      ).length;
+
+      return {
+        role: "STUDENT" as const,
+        metrics: {
+          totalAssessments: assessments.length,
+          pendingAppointments,
+          activeAlerts,
+          totalAppointments: appointments.length
+        },
+        lastAssessment: lastAssessment
+          ? {
+              condition: lastAssessment.condition,
+              triageLevel: lastAssessment.triageLevel,
+              recommendation: lastAssessment.recommendation,
+              createdAt: lastAssessment.createdAt.toISOString()
+            }
+          : null,
+        recentAppointments: appointments.slice(0, 5).map((a) => ({
+          id: a.id,
+          reason: a.reason,
+          status: a.status.toLowerCase(),
+          preferredDateTime: a.preferredDateTime.toISOString(),
+          assignedDoctor: a.assignedDoctor?.name ?? null
+        }))
+      };
+    }
+
     const [
       activeEmergencies,
       pendingAppointments,
@@ -27,6 +66,7 @@ export const dashboardService = {
       ]);
 
       return {
+        role: "ADMIN" as const,
         metrics: {
           students: studentCount,
           doctors: doctorCount,
@@ -35,17 +75,17 @@ export const dashboardService = {
           pendingAppointments,
           assessmentsInLast24Hours: recentAssessments
         },
-        recentAppointments: recentAppointments.map((appointment) => ({
-          id: appointment.id,
-          studentName: appointment.student.name,
-          status: appointment.status.toLowerCase(),
-          preferredDateTime: appointment.preferredDateTime.toISOString()
+        recentAppointments: recentAppointments.map((a) => ({
+          id: a.id,
+          studentName: a.student.name,
+          status: a.status.toLowerCase(),
+          preferredDateTime: a.preferredDateTime.toISOString()
         })),
-        recentEmergencies: recentEmergencies.map((alert) => ({
-          id: alert.id,
-          studentName: alert.student.name,
-          severity: alert.severity.toLowerCase(),
-          status: alert.status.toLowerCase()
+        recentEmergencies: recentEmergencies.map((a) => ({
+          id: a.id,
+          studentName: a.student.name,
+          severity: a.severity.toLowerCase(),
+          status: a.status.toLowerCase()
         }))
       };
     }
@@ -53,24 +93,25 @@ export const dashboardService = {
     const doctorAssignments = await appointmentRepository.countAssignedToDoctor(userId);
 
     return {
+      role: "DOCTOR" as const,
       metrics: {
         activeEmergencies,
         pendingAppointments,
         doctorAssignments,
         assessmentsInLast24Hours: recentAssessments
       },
-      recentAppointments: recentAppointments.map((appointment) => ({
-        id: appointment.id,
-        studentName: appointment.student.name,
-        status: appointment.status.toLowerCase(),
-        preferredDateTime: appointment.preferredDateTime.toISOString(),
-        assignedDoctor: appointment.assignedDoctor?.name ?? null
+      recentAppointments: recentAppointments.map((a) => ({
+        id: a.id,
+        studentName: a.student.name,
+        status: a.status.toLowerCase(),
+        preferredDateTime: a.preferredDateTime.toISOString(),
+        assignedDoctor: a.assignedDoctor?.name ?? null
       })),
-      recentEmergencies: recentEmergencies.map((alert) => ({
-        id: alert.id,
-        studentName: alert.student.name,
-        severity: alert.severity.toLowerCase(),
-        status: alert.status.toLowerCase()
+      recentEmergencies: recentEmergencies.map((a) => ({
+        id: a.id,
+        studentName: a.student.name,
+        severity: a.severity.toLowerCase(),
+        status: a.status.toLowerCase()
       }))
     };
   }

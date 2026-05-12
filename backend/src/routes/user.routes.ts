@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { userController } from "../controllers/user.controller";
 import { authenticate } from "../middleware/authenticate";
+import { requireRole } from "../middleware/require-role";
 import { validateRequest } from "../middleware/validate";
 import { updateProfileSchema, changePasswordSchema } from "../schemas/user.schema";
 import { asyncHandler } from "../utils/async-handler";
@@ -21,4 +22,11 @@ userRouter.patch(
   authenticate,
   validateRequest({ body: changePasswordSchema }),
   asyncHandler(userController.changePassword)
+);
+
+userRouter.get(
+  "/search",
+  authenticate,
+  requireRole("DOCTOR", "ADMIN"),
+  asyncHandler(userController.searchStudents)
 );

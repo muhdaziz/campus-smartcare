@@ -6,10 +6,7 @@ import { auditService } from "./audit.service";
 import type { SafeUser } from "../types/auth";
 
 export function toSafeUser(user: Awaited<ReturnType<typeof userRepository.findById>>): SafeUser {
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
-
+  if (!user) throw new AppError(404, "User not found");
   return {
     id: user.id,
     name: user.name,
@@ -23,9 +20,7 @@ export function toSafeUser(user: Awaited<ReturnType<typeof userRepository.findBy
           ageRange: user.healthProfile.ageRange,
           sex: user.healthProfile.sex,
           allergies: decryptSensitiveValue(user.healthProfile.allergiesEncrypted),
-          chronicConditions: decryptSensitiveValue(
-            user.healthProfile.chronicConditionsEncrypted
-          )
+          chronicConditions: decryptSensitiveValue(user.healthProfile.chronicConditionsEncrypted)
         }
       : null
   };
@@ -35,6 +30,11 @@ export const userService = {
   async getCurrentUser(userId: string) {
     const user = await userRepository.findById(userId);
     return toSafeUser(user);
+  },
+
+  async searchStudents(query: string) {
+    const users = await userRepository.searchStudents(query);
+    return users.map((u) => toSafeUser(u));
   },
 
   async updateProfile(
@@ -73,19 +73,12 @@ export const userService = {
     return toSafeUser(user);
   },
 
-  async changePassword(
-    userId: string,
-    input: { currentPassword: string; newPassword: string }
-  ) {
+  async changePassword(userId: string, input: { currentPassword: string; newPassword: string }) {
     const user = await userRepository.findById(userId);
-    if (!user) {
-      throw new AppError(404, "User not found");
-    }
+    if (!user) throw new AppError(404, "User not found");
 
     const matches = await bcrypt.compare(input.currentPassword, user.passwordHash);
-    if (!matches) {
-      throw new AppError(400, "Current password is incorrect");
-    }
+    if (!matches) throw new AppError(400, "Current password is incorrect");
 
     const passwordHash = await bcrypt.hash(input.newPassword, 12);
     await userRepository.updateProfile(userId, { passwordHash });

@@ -12,6 +12,7 @@ import { StaffAdminPage } from "./pages/StaffAdminPage";
 import { SymptomCheckerPage } from "./pages/SymptomCheckerPage";
 import { AppointmentsPage } from "./pages/AppointmentsPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { DoctorWorkspacePage } from "./pages/DoctorWorkspacePage";
 
 export default function App() {
   return (
@@ -28,6 +29,10 @@ export default function App() {
 
               <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
                 <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={["DOCTOR"]} />}>
+                <Route path="/workspace" element={<DoctorWorkspacePage />} />
               </Route>
 
               <Route path="/appointments" element={<AppointmentsPage />} />

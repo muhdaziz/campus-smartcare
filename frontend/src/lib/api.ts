@@ -210,6 +210,10 @@ export const api = {
     return request<User>("/admin/users", { method: "POST", body: JSON.stringify(payload) });
   },
 
+  async searchStudents(query: string) {
+    return request<User[]>(`/users/search?q=${encodeURIComponent(query)}`);
+  },
+
   async deactivateUser(id: string) {
     return request<User>(`/admin/users/${id}/deactivate`, { method: "PATCH" });
   }

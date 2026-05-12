@@ -7,17 +7,11 @@ const profileInclude = {
 
 export const userRepository = {
   findByEmail(email: string) {
-    return prisma.user.findUnique({
-      where: { email },
-      include: profileInclude
-    });
+    return prisma.user.findUnique({ where: { email }, include: profileInclude });
   },
 
   findById(id: string) {
-    return prisma.user.findUnique({
-      where: { id },
-      include: profileInclude
-    });
+    return prisma.user.findUnique({ where: { id }, include: profileInclude });
   },
 
   findByRole(role?: Role) {
@@ -25,6 +19,23 @@ export const userRepository = {
       where: role ? { role, status: "ACTIVE" } : { status: "ACTIVE" },
       include: profileInclude,
       orderBy: { createdAt: "desc" }
+    });
+  },
+
+  searchStudents(query: string) {
+    return prisma.user.findMany({
+      where: {
+        role: "STUDENT",
+        status: "ACTIVE",
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+          { healthProfile: { matricNumber: { contains: query, mode: "insensitive" } } }
+        ]
+      },
+      include: profileInclude,
+      take: 20,
+      orderBy: { name: "asc" }
     });
   },
 
@@ -46,24 +57,14 @@ export const userRepository = {
         email: input.email,
         passwordHash: input.passwordHash,
         role: "STUDENT",
-        healthProfile: input.healthProfile
-          ? { create: input.healthProfile }
-          : undefined
+        healthProfile: input.healthProfile ? { create: input.healthProfile } : undefined
       },
       include: profileInclude
     });
   },
 
-  createStaff(input: {
-    name: string;
-    email: string;
-    passwordHash: string;
-    role: Role;
-  }) {
-    return prisma.user.create({
-      data: input,
-      include: profileInclude
-    });
+  createStaff(input: { name: string; email: string; passwordHash: string; role: Role }) {
+    return prisma.user.create({ data: input, include: profileInclude });
   },
 
   updateProfile(
@@ -81,20 +82,12 @@ export const userRepository = {
     }
   ) {
     const { healthProfile, ...userFields } = data;
-
     return prisma.user.update({
       where: { id },
       data: {
         ...userFields,
         ...(healthProfile
-          ? {
-              healthProfile: {
-                upsert: {
-                  create: healthProfile,
-                  update: healthProfile
-                }
-              }
-            }
+          ? { healthProfile: { upsert: { create: healthProfile, update: healthProfile } } }
           : {})
       },
       include: profileInclude
@@ -102,17 +95,11 @@ export const userRepository = {
   },
 
   updateStatus(id: string, status: "ACTIVE" | "INACTIVE") {
-    return prisma.user.update({
-      where: { id },
-      data: { status },
-      include: profileInclude
-    });
+    return prisma.user.update({ where: { id }, data: { status }, include: profileInclude });
   },
 
   findDoctorById(id: string) {
-    return prisma.user.findFirst({
-      where: { id, role: "DOCTOR", status: "ACTIVE" }
-    });
+    return prisma.user.findFirst({ where: { id, role: "DOCTOR", status: "ACTIVE" } });
   },
 
   countByRole(role: Role) {

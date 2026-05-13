@@ -94,7 +94,10 @@ export function SymptomCheckerPage() {
               <div className="result-headline">
                 <div>
                   <strong>{currentResult.condition}</strong>
-                  <span>Confidence {Math.round(currentResult.confidence * 100)}%</span>
+                  <span>
+                    Confidence {Math.round(currentResult.confidence * 100)}% (
+                    {currentResult.confidenceBand})
+                  </span>
                 </div>
                 <StatusPill value={currentResult.triageLevel} />
               </div>
@@ -110,6 +113,26 @@ export function SymptomCheckerPage() {
                 <strong>Recommendation</strong>
                 <p>{currentResult.recommendation}</p>
               </div>
+              {currentResult.analytics && (
+                <div className="callout">
+                  <strong>Assessment analytics</strong>
+                  <p>
+                    Trend: {currentResult.analytics.trend}. Previous assessments:{" "}
+                    {currentResult.analytics.previousAssessmentCount}. Previous emergency
+                    cases: {currentResult.analytics.previousEmergencyCount}. Repeated
+                    condition matches: {currentResult.analytics.repeatedConditionCount}.
+                  </p>
+                  {currentResult.analytics.recurringSymptoms.length > 0 && (
+                    <div className="tag-row">
+                      {currentResult.analytics.recurringSymptoms.map((symptom) => (
+                        <span className="tag" key={symptom}>
+                          recurring: {symptom}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <p className="empty-state">Your most recent assessment will appear here after analysis.</p>
@@ -125,6 +148,7 @@ export function SymptomCheckerPage() {
               <div>
                 <strong>{item.condition}</strong>
                 <span>{new Date(item.createdAt).toLocaleString()}</span>
+                <span>Confidence band: {item.confidenceBand}</span>
                 <p>{item.recommendation}</p>
               </div>
               <StatusPill value={item.triageLevel} />

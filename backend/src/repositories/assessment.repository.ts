@@ -27,6 +27,14 @@ export const assessmentRepository = {
     });
   },
 
+  findRecentByStudent(studentId: string, take = 10) {
+    return prisma.symptomAssessment.findMany({
+      where: { studentId },
+      orderBy: { createdAt: "desc" },
+      take
+    });
+  },
+
   findById(id: string) {
     return prisma.symptomAssessment.findUnique({
       where: { id }

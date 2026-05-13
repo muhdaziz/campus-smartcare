@@ -32,6 +32,7 @@ export interface Assessment {
   contextNotes?: string;
   triageLevel: string;
   confidence: number;
+  confidenceBand: string;
   condition: string;
   matchedSignals: string[];
   explanation: string;
@@ -39,6 +40,13 @@ export interface Assessment {
   engineVersion: string;
   emergencyFlag: boolean;
   createdAt: string;
+  analytics?: {
+    previousAssessmentCount: number;
+    previousEmergencyCount: number;
+    repeatedConditionCount: number;
+    recurringSymptoms: string[];
+    trend: string;
+  };
 }
 
 export interface Appointment {

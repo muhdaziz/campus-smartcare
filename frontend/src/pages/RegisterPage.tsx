@@ -48,7 +48,7 @@ export function RegisterPage() {
     <div className="auth-page">
       <form className="auth-card wide" onSubmit={handleSubmit}>
         <div className="eyebrow">Student Registration</div>
-        <h1>Create your health access account</h1>
+        <h1>Create your SmartPLus account</h1>
         <p>
           Students self-register here. Doctor and admin accounts are provisioned by the clinic
           administrator.
@@ -117,8 +117,6 @@ export function RegisterPage() {
             >
               <option value="FEMALE">Female</option>
               <option value="MALE">Male</option>
-              <option value="OTHER">Other</option>
-              <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
             </select>
           </label>
 

@@ -25,21 +25,16 @@ export function saveSession(session: Session | null) {
     localStorage.removeItem(STORAGE_KEY);
     return;
   }
-
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
 
 async function refreshSession() {
   const session = getStoredSession();
-  if (!session?.refreshToken) {
-    return null;
-  }
+  if (!session?.refreshToken) return null;
 
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: session.refreshToken })
   });
 
@@ -62,16 +57,11 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
     headers.set("Authorization", `Bearer ${session.accessToken}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers
-  });
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
 
   if (response.status === 401 && retry && session?.refreshToken) {
     const refreshed = await refreshSession();
-    if (refreshed) {
-      return request<T>(path, init, false);
-    }
+    if (refreshed) return request<T>(path, init, false);
   }
 
   if (!response.ok) {
@@ -95,17 +85,11 @@ export const api = {
       chronicConditions?: string;
     };
   }) {
-    return request<Session>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    return request<Session>("/auth/register", { method: "POST", body: JSON.stringify(payload) });
   },
 
   async login(payload: { email: string; password: string }) {
-    return request<Session>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    return request<Session>("/auth/login", { method: "POST", body: JSON.stringify(payload) });
   },
 
   async logout() {
@@ -123,11 +107,28 @@ export const api = {
     return request<User>("/users/me");
   },
 
-  async createAssessment(payload: { symptoms: string[]; contextNotes?: string }) {
-    return request<Assessment>("/assessments", {
-      method: "POST",
+  async updateProfile(payload: {
+    name?: string;
+    healthProfile?: {
+      matricNumber?: string;
+      ageRange?: string;
+      sex?: string;
+      allergies?: string;
+      chronicConditions?: string;
+    };
+  }) {
+    return request<User>("/users/me", { method: "PATCH", body: JSON.stringify(payload) });
+  },
+
+  async changePassword(payload: { currentPassword: string; newPassword: string }) {
+    return request<{ success: boolean }>("/users/me/password", {
+      method: "PATCH",
       body: JSON.stringify(payload)
     });
+  },
+
+  async createAssessment(payload: { symptoms: string[]; contextNotes?: string }) {
+    return request<Assessment>("/assessments", { method: "POST", body: JSON.stringify(payload) });
   },
 
   async getMyAssessments() {
@@ -139,10 +140,7 @@ export const api = {
     reason: string;
     triageReferenceId?: string;
   }) {
-    return request<Appointment>("/appointments", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    return request<Appointment>("/appointments", { method: "POST", body: JSON.stringify(payload) });
   },
 
   async getMyAppointments() {
@@ -172,10 +170,7 @@ export const api = {
     linkedAssessmentId?: string;
     severity?: string;
   }) {
-    return request<EmergencyAlert>("/emergencies", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    return request<EmergencyAlert>("/emergencies", { method: "POST", body: JSON.stringify(payload) });
   },
 
   async getEmergencies() {
@@ -183,15 +178,11 @@ export const api = {
   },
 
   async acknowledgeEmergency(id: string) {
-    return request<EmergencyAlert>(`/emergencies/${id}/acknowledge`, {
-      method: "PATCH"
-    });
+    return request<EmergencyAlert>(`/emergencies/${id}/acknowledge`, { method: "PATCH" });
   },
 
   async resolveEmergency(id: string) {
-    return request<EmergencyAlert>(`/emergencies/${id}/resolve`, {
-      method: "PATCH"
-    });
+    return request<EmergencyAlert>(`/emergencies/${id}/resolve`, { method: "PATCH" });
   },
 
   async getMyRecords() {
@@ -202,29 +193,28 @@ export const api = {
     return request<RecordBundle>(`/records/${studentId}`);
   },
 
-  async createRecordEntry(
-    studentId: string,
-    payload: { type: string; title: string; note: string }
-  ) {
-    return request(`/records/${studentId}/entries`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+  async createRecordEntry(studentId: string, payload: { type: string; title: string; note: string }) {
+    return request(`/records/${studentId}/entries`, { method: "POST", body: JSON.stringify(payload) });
   },
 
   async getDashboardSummary() {
     return request<DashboardSummary>("/dashboard/summary");
   },
 
-  async createStaffAccount(payload: {
-    name: string;
-    email: string;
-    password: string;
-    role: string;
-  }) {
-    return request<User>("/admin/users", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+  async listUsers(role?: string) {
+    const query = role ? `?role=${role}` : "";
+    return request<User[]>(`/admin/users${query}`);
+  },
+
+  async createStaffAccount(payload: { name: string; email: string; password: string; role: string }) {
+    return request<User>("/admin/users", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async searchStudents(query: string) {
+    return request<User[]>(`/users/search?q=${encodeURIComponent(query)}`);
+  },
+
+  async deactivateUser(id: string) {
+    return request<User>(`/admin/users/${id}/deactivate`, { method: "PATCH" });
   }
 };

@@ -32,5 +32,29 @@ export const adminService = {
     });
 
     return toSafeUser(user);
+  },
+
+  async listUsers(role?: string) {
+    const validRoles: Role[] = ["STUDENT", "DOCTOR", "ADMIN"];
+    const roleFilter = role && validRoles.includes(role as Role) ? (role as Role) : undefined;
+    const users = await userRepository.findByRole(roleFilter);
+    return users.map((user) => toSafeUser(user));
+  },
+
+  async deactivateUser(actorId: string, targetId: string) {
+    if (actorId === targetId) {
+      throw new AppError(400, "You cannot deactivate your own account");
+    }
+
+    const user = await userRepository.updateStatus(targetId, "INACTIVE");
+
+    await auditService.log({
+      actorId,
+      action: "admin.user_deactivated",
+      entityType: "User",
+      entityId: targetId
+    });
+
+    return toSafeUser(user);
   }
 };

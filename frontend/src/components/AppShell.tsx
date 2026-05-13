@@ -9,21 +9,33 @@ const studentLinks = [
   { to: "/emergency", label: "Emergency" }
 ];
 
-const staffLinks = [
+const doctorLinks = [
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/appointments", label: "Appointment Queue" },
+  { to: "/workspace", label: "My Workspace" },
+  { to: "/appointments", label: "Full Queue" },
   { to: "/records", label: "Student Records" },
   { to: "/emergency", label: "Emergency Desk" }
 ];
 
+const adminLinks = [
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/appointments", label: "Appointment Queue" },
+  { to: "/records", label: "Student Records" },
+  { to: "/emergency", label: "Emergency Desk" },
+  { to: "/staff", label: "Staff Admin" }
+];
+
 export function AppShell() {
   const { session, logout } = useAuth();
-  const links =
+
+  const baseLinks =
     session?.user.role === "STUDENT"
       ? studentLinks
-      : session?.user.role === "ADMIN"
-        ? [...staffLinks, { to: "/staff", label: "Staff Admin" }]
-        : staffLinks;
+      : session?.user.role === "DOCTOR"
+        ? doctorLinks
+        : adminLinks;
+
+  const links = [...baseLinks, { to: "/profile", label: "Profile" }];
 
   return (
     <div className="dashboard-layout">

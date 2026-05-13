@@ -13,13 +13,18 @@ export function RecordsPage() {
     note: ""
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function loadOwnRecords() {
+    setLoading(true);
+    setError("");
     try {
       const data = await api.getMyRecords();
       setBundle(data);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load records");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -27,12 +32,15 @@ export function RecordsPage() {
     if (!studentId) {
       return;
     }
-
+    setLoading(true);
+    setError("");
     try {
       const data = await api.getStudentRecords(studentId);
       setBundle(data);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load student record");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -76,7 +84,7 @@ export function RecordsPage() {
             <div className="form-grid compact-grid">
               <label>
                 Student ID
-                <input value={studentId} onChange={(event) => setStudentId(event.target.value)} />
+                <input value={studentId} onChange={(event) => setStudentId(event.target.value)} placeholder="Paste student UUID" />
               </label>
               <button className="primary-button" onClick={() => void loadStudentRecords()}>
                 Load Student Record
@@ -129,7 +137,13 @@ export function RecordsPage() {
 
       {error && <div className="form-error">{error}</div>}
 
-      {bundle && (
+      {loading && (
+        <div className="loading-card">
+          <p>Loading records...</p>
+        </div>
+      )}
+
+      {!loading && bundle && (
         <>
           <section className="panel">
             <h3>Profile</h3>

@@ -11,6 +11,8 @@ import { RecordsPage } from "./pages/RecordsPage";
 import { StaffAdminPage } from "./pages/StaffAdminPage";
 import { SymptomCheckerPage } from "./pages/SymptomCheckerPage";
 import { AppointmentsPage } from "./pages/AppointmentsPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { DoctorWorkspacePage } from "./pages/DoctorWorkspacePage";
 
 export default function App() {
   return (
@@ -29,9 +31,14 @@ export default function App() {
                 <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
               </Route>
 
+              <Route element={<ProtectedRoute allowedRoles={["DOCTOR"]} />}>
+                <Route path="/workspace" element={<DoctorWorkspacePage />} />
+              </Route>
+
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/records" element={<RecordsPage />} />
               <Route path="/emergency" element={<EmergencyPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
 
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/staff" element={<StaffAdminPage />} />

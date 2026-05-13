@@ -9,6 +9,7 @@ export function EmergencyPage() {
   const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
   const [form, setForm] = useState({ message: "", linkedAssessmentId: "", severity: "EMERGENCY" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   async function loadAlerts() {
     try {
@@ -16,6 +17,8 @@ export function EmergencyPage() {
       setAlerts(data);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load alerts");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -48,6 +51,14 @@ export function EmergencyPage() {
     await loadAlerts();
   }
 
+  if (loading) {
+    return (
+      <div className="loading-card">
+        <p>Loading emergency alerts...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page-shell">
       <section className="panel page-heading">
@@ -70,6 +81,19 @@ export function EmergencyPage() {
       {session?.user.role === "STUDENT" && (
         <form className="panel" onSubmit={handleCreate}>
           <div className="form-grid">
+            <label>
+              Severity
+              <select
+                value={form.severity}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, severity: event.target.value }))
+                }
+              >
+                <option value="MODERATE">Moderate — needs attention soon</option>
+                <option value="EMERGENCY">Emergency — urgent / life-threatening</option>
+              </select>
+            </label>
+
             <label>
               Emergency message
               <textarea

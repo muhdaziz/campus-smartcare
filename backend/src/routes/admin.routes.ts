@@ -8,10 +8,24 @@ import { asyncHandler } from "../utils/async-handler";
 
 export const adminRouter = Router();
 
+adminRouter.get(
+  "/users",
+  authenticate,
+  requireRole("ADMIN", "DOCTOR"),
+  asyncHandler(adminController.listUsers)
+);
+
 adminRouter.post(
   "/users",
   authenticate,
   requireRole("ADMIN"),
   validateRequest({ body: createStaffSchema }),
   asyncHandler(adminController.createStaffAccount)
+);
+
+adminRouter.patch(
+  "/users/:id/deactivate",
+  authenticate,
+  requireRole("ADMIN"),
+  asyncHandler(adminController.deactivateUser)
 );
